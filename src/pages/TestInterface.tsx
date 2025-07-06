@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { Clock, Volume2, FileText, Image } from 'lucide-react';
 
 type Question = {
@@ -29,6 +30,7 @@ const TestInterface = () => {
   const [showResults, setShowResults] = useState(false);
 
   const selectedParts = searchParams.get('parts')?.split(',') || [];
+  const customTime = searchParams.get('time') ? parseInt(searchParams.get('time')!) : null;
   const isPartialTest = selectedParts.length > 0;
 
   // Mock test data with TOEIC parts 1-7
@@ -142,16 +144,18 @@ const TestInterface = () => {
       : allQuestions
   };
 
-  // Adjust timer based on selected parts
+  // Adjust timer based on selected parts or custom time
   useEffect(() => {
-    if (isPartialTest) {
+    if (customTime) {
+      setTimeLeft(customTime * 60);
+    } else if (isPartialTest) {
       const timePerPart = { '1': 600, '2': 900, '3': 1200, '4': 1200, '5': 1800, '6': 1200, '7': 2400 };
       const totalTime = selectedParts.reduce((sum, part) => sum + (timePerPart[part as keyof typeof timePerPart] || 600), 0);
       setTimeLeft(totalTime);
     } else {
       setTimeLeft(7200); // 2 hours for full test
     }
-  }, [isPartialTest, selectedParts]);
+  }, [isPartialTest, selectedParts, customTime]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
