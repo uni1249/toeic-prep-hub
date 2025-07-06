@@ -1,16 +1,15 @@
-
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Volume2, FileText } from 'lucide-react';
+import { Clock, Volume2, FileText, Image } from 'lucide-react';
 
 type Question = {
   id: number;
-  section: string;
+  part: string;
   type: string;
   question: string;
   options: string[];
@@ -23,83 +22,136 @@ type Question = {
 const TestInterface = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [timeLeft, setTimeLeft] = useState(7200); // 2 hours in seconds
+  const [timeLeft, setTimeLeft] = useState(7200);
   const [showResults, setShowResults] = useState(false);
 
-  // Mock test data
+  const selectedParts = searchParams.get('parts')?.split(',') || [];
+  const isPartialTest = selectedParts.length > 0;
+
+  // Mock test data with TOEIC parts 1-7
+  const allQuestions: Question[] = [
+    {
+      id: 1,
+      part: '1',
+      type: 'photograph',
+      question: 'Look at the picture and choose the best description.',
+      image: '/placeholder.svg',
+      audio: true,
+      options: [
+        'The woman is reading a book',
+        'The woman is writing on a board',
+        'The woman is making a presentation',
+        'The woman is using a computer'
+      ],
+      correct: 'The woman is making a presentation'
+    },
+    {
+      id: 2,
+      part: '2',
+      type: 'question-response',
+      question: 'You will hear a question followed by three responses. Choose the best response.',
+      audio: true,
+      options: [
+        'At 3 o\'clock',
+        'In the conference room',
+        'With my colleagues'
+      ],
+      correct: 'At 3 o\'clock'
+    },
+    {
+      id: 3,
+      part: '3',
+      type: 'conversation',
+      question: 'What is the main topic of the conversation?',
+      audio: true,
+      options: [
+        'Planning a business trip',
+        'Scheduling a meeting',
+        'Discussing a project deadline',
+        'Arranging a lunch appointment'
+      ],
+      correct: 'Scheduling a meeting'
+    },
+    {
+      id: 4,
+      part: '4',
+      type: 'talk',
+      question: 'What is the speaker announcing?',
+      audio: true,
+      options: [
+        'A company reorganization',
+        'New office hours',
+        'A product launch',
+        'System maintenance'
+      ],
+      correct: 'System maintenance'
+    },
+    {
+      id: 5,
+      part: '5',
+      type: 'incomplete-sentence',
+      question: 'The meeting has been _______ until next week due to the holiday.',
+      options: [
+        'postponed',
+        'postpone',
+        'postponing',
+        'to postpone'
+      ],
+      correct: 'postponed'
+    },
+    {
+      id: 6,
+      part: '6',
+      type: 'text-completion',
+      question: 'Choose the best word or phrase to complete the text.',
+      text: 'We are pleased to announce that our company has _______ expanded its operations to include three new locations across the region.',
+      options: [
+        'successfully',
+        'success',
+        'successful',
+        'succeed'
+      ],
+      correct: 'successfully'
+    },
+    {
+      id: 7,
+      part: '7',
+      type: 'reading-comprehension',
+      question: 'According to the passage, what is the company\'s main goal?',
+      text: 'TechCorp has announced its expansion plans for the next fiscal year. The company aims to increase its market share by 25% through strategic partnerships and innovative product development. The CEO emphasized that customer satisfaction remains their top priority.',
+      options: [
+        'To hire more employees',
+        'To increase market share by 25%',
+        'To reduce operational costs',
+        'To open new offices'
+      ],
+      correct: 'To increase market share by 25%'
+    }
+  ];
+
   const testData = {
     id: testId,
-    title: 'TOEIC Practice Test - Intermediate',
-    questions: [
-      {
-        id: 1,
-        section: 'Listening',
-        type: 'audio',
-        question: 'What is the main topic of the conversation?',
-        audio: true,
-        options: [
-          'A business meeting',
-          'A job interview',
-          'A phone call about scheduling',
-          'A restaurant reservation'
-        ],
-        correct: 'A phone call about scheduling'
-      },
-      {
-        id: 2,
-        section: 'Reading',
-        type: 'comprehension',
-        question: 'According to the passage, what is the company\'s main goal?',
-        text: 'TechCorp has announced its expansion plans for the next fiscal year. The company aims to increase its market share by 25% through strategic partnerships and innovative product development. The CEO emphasized that customer satisfaction remains their top priority.',
-        options: [
-          'To hire more employees',
-          'To increase market share by 25%',
-          'To reduce operational costs',
-          'To open new offices'
-        ],
-        correct: 'To increase market share by 25%'
-      },
-      {
-        id: 3,
-        section: 'Reading',
-        type: 'grammar',
-        question: 'Choose the best option to complete the sentence: "The meeting has been _______ until next week."',
-        options: [
-          'postponed',
-          'postpone',
-          'postponing',
-          'to postpone'
-        ],
-        correct: 'postponed'
-      },
-      {
-        id: 4,
-        section: 'Listening',
-        type: 'image',
-        question: 'What is the person in the image most likely doing?',
-        image: '/placeholder.svg',
-        options: [
-          'Making a presentation',
-          'Attending a meeting',
-          'Working on a computer',
-          'Having lunch'
-        ],
-        correct: 'Making a presentation'
-      }
-    ] as Question[]
+    title: isPartialTest 
+      ? `TOEIC Practice Test - Parts ${selectedParts.join(', ')}` 
+      : 'TOEIC Practice Test - Complete',
+    questions: isPartialTest 
+      ? allQuestions.filter(q => selectedParts.includes(q.part))
+      : allQuestions
   };
 
-  // Timer effect
+  // Adjust timer based on selected parts
   useEffect(() => {
-    if (timeLeft > 0 && !showResults) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      handleSubmitTest();
+    if (isPartialTest) {
+      const timePerPart = { '1': 600, '2': 900, '3': 1200, '4': 1200, '5': 1800, '6': 1200, '7': 2400 };
+      const totalTime = selectedParts.reduce((sum, part) => sum + (timePerPart[part as keyof typeof timePerPart] || 600), 0);
+      setTimeLeft(totalTime);
+    } else {
+      setTimeLeft(7200); // 2 hours for full test
     }
-  }, [timeLeft, showResults]);
+  }, [isPartialTest, selectedParts]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -129,7 +181,6 @@ const TestInterface = () => {
 
   const handleSubmitTest = () => {
     setShowResults(true);
-    // Here you would typically send results to backend
   };
 
   const calculateScore = () => {
@@ -140,6 +191,19 @@ const TestInterface = () => {
       }
     });
     return Math.round((correct / testData.questions.length) * 100);
+  };
+
+  const getPartName = (part: string) => {
+    const partNames: Record<string, string> = {
+      '1': 'Photographs',
+      '2': 'Question-Response',
+      '3': 'Conversations',
+      '4': 'Talks',
+      '5': 'Incomplete Sentences',
+      '6': 'Text Completion',
+      '7': 'Reading Comprehension'
+    };
+    return partNames[part] || part;
   };
 
   const currentQ = testData.questions[currentQuestion];
@@ -160,13 +224,18 @@ const TestInterface = () => {
                 You answered {testData.questions.filter(q => answers[q.id] === q.correct).length} out of {testData.questions.length} questions correctly
               </p>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Section Breakdown:</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>Listening: 85%</div>
-                <div>Reading: 78%</div>
+            {isPartialTest && (
+              <div className="space-y-2">
+                <h3 className="font-semibold">Parts Completed:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedParts.map(part => (
+                    <Badge key={part} variant="outline">
+                      Part {part}: {getPartName(part)}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex gap-4 justify-center">
               <Button onClick={() => navigate('/practice-tests')}>
                 More Tests
@@ -201,7 +270,7 @@ const TestInterface = () => {
       <div className="mb-6">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
           <span>Question {currentQuestion + 1} of {testData.questions.length}</span>
-          <span>{currentQ.section}</span>
+          <span>Part {currentQ.part}: {getPartName(currentQ.part)}</span>
         </div>
         <Progress value={progress} className="w-full" />
       </div>
@@ -214,7 +283,7 @@ const TestInterface = () => {
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <Volume2 className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium">Audio Question</span>
+                <span className="text-sm font-medium">Audio Question - Part {currentQ.part}</span>
               </div>
               <audio controls className="w-full">
                 <source src="/audio/sample.mp3" type="audio/mpeg" />
@@ -226,6 +295,10 @@ const TestInterface = () => {
           {/* Image for image-based questions */}
           {currentQ.image && (
             <div className="mb-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Image className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium">Part {currentQ.part}: {getPartName(currentQ.part)}</span>
+              </div>
               <img 
                 src={currentQ.image} 
                 alt="Question image" 
@@ -239,7 +312,7 @@ const TestInterface = () => {
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <FileText className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium">Reading Passage</span>
+                <span className="text-sm font-medium">Part {currentQ.part}: {getPartName(currentQ.part)}</span>
               </div>
               <p className="text-sm leading-relaxed">{currentQ.text}</p>
             </div>

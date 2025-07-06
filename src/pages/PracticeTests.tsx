@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Users, Star, Filter, Search } from 'lucide-react';
 
 const PracticeTests = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
+  const [selectedParts, setSelectedParts] = useState<string[]>([]);
+  const [showPartSelection, setShowPartSelection] = useState<number | null>(null);
+
+  const toeicParts = [
+    { id: '1', name: 'Part 1: Photographs', section: 'Listening' },
+    { id: '2', name: 'Part 2: Question-Response', section: 'Listening' },
+    { id: '3', name: 'Part 3: Conversations', section: 'Listening' },
+    { id: '4', name: 'Part 4: Talks', section: 'Listening' },
+    { id: '5', name: 'Part 5: Incomplete Sentences', section: 'Reading' },
+    { id: '6', name: 'Part 6: Text Completion', section: 'Reading' },
+    { id: '7', name: 'Part 7: Reading Comprehension', section: 'Reading' },
+  ];
 
   const practiceTests = [
     {
@@ -93,6 +105,21 @@ const PracticeTests = () => {
     const matchesLevel = selectedLevel === 'all' || test.level === selectedLevel;
     return matchesSearch && matchesLevel;
   });
+
+  const handlePartToggle = (partId: string) => {
+    setSelectedParts(prev => 
+      prev.includes(partId) 
+        ? prev.filter(id => id !== partId)
+        : [...prev, partId]
+    );
+  };
+
+  const getSelectedPartsUrl = (testId: number) => {
+    if (selectedParts.length === 0) {
+      return `/test/${testId}`;
+    }
+    return `/test/${testId}?parts=${selectedParts.join(',')}`;
+  };
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -215,11 +242,61 @@ const PracticeTests = () => {
                     </Badge>
                   </div>
                 </div>
-                <Link to={`/test/${test.id}`} className="block mt-4">
-                  <Button className="w-full">
-                    Start Test
+
+                {/* Part Selection */}
+                {showPartSelection === test.id && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium mb-3">Select Parts (optional):</h4>
+                    <div className="space-y-2">
+                      {toeicParts.map((part) => (
+                        <div key={part.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`part-${part.id}`}
+                            checked={selectedParts.includes(part.id)}
+                            onCheckedChange={() => handlePartToggle(part.id)}
+                          />
+                          <Label htmlFor={`part-${part.id}`} className="text-sm">
+                            {part.name}
+                          </Label>
+                          <Badge variant="outline" className="text-xs">
+                            {part.section}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedParts.length > 0 && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        {selectedParts.length} part{selectedParts.length > 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-4 space-y-2">
+                  <Link to={getSelectedPartsUrl(test.id)} className="block">
+                    <Button className="w-full">
+                      {selectedParts.length > 0 && showPartSelection === test.id
+                        ? `Start Selected Parts (${selectedParts.length})`
+                        : 'Start Full Test'
+                      }
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      if (showPartSelection === test.id) {
+                        setShowPartSelection(null);
+                        setSelectedParts([]);
+                      } else {
+                        setShowPartSelection(test.id);
+                        setSelectedParts([]);
+                      }
+                    }}
+                  >
+                    {showPartSelection === test.id ? 'Cancel' : 'Choose Parts'}
                   </Button>
-                </Link>
+                </div>
               </CardContent>
             </Card>
           ))}
