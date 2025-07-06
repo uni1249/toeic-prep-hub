@@ -3,106 +3,103 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Clock, Volume2, BookOpen, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Clock, Volume2, FileText } from 'lucide-react';
+
+type Question = {
+  id: number;
+  section: string;
+  type: string;
+  question: string;
+  options: string[];
+  correct: string;
+  audio?: boolean;
+  image?: string;
+  text?: string;
+};
 
 const TestInterface = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState(7200); // 2 hours in seconds
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [timeLeft, setTimeLeft] = useState(7200); // 2 hours in seconds
+  const [showResults, setShowResults] = useState(false);
 
   // Mock test data
   const testData = {
     id: testId,
-    title: 'TOEIC Practice Test 1',
-    totalQuestions: 20, // Reduced for demo
-    sections: [
-      {
-        name: 'Listening',
-        questions: 10,
-        current: currentQuestion < 10,
-      },
-      {
-        name: 'Reading', 
-        questions: 10,
-        current: currentQuestion >= 10,
-      },
-    ],
+    title: 'TOEIC Practice Test - Intermediate',
     questions: [
-      // Listening questions (0-9)
       {
         id: 1,
         section: 'Listening',
-        type: 'Photo Description',
-        question: 'Look at the picture and choose the best description.',
-        image: '/placeholder.svg',
+        type: 'audio',
+        question: 'What is the main topic of the conversation?',
         audio: true,
         options: [
-          'The woman is reading a book in the library.',
-          'The woman is typing on a computer.',
-          'The woman is writing with a pen.',
-          'The woman is talking on the phone.',
+          'A business meeting',
+          'A job interview',
+          'A phone call about scheduling',
+          'A restaurant reservation'
         ],
-        correct: 'B',
+        correct: 'A phone call about scheduling'
       },
-      // Add more listening questions...
-      ...Array.from({ length: 9 }, (_, i) => ({
-        id: i + 2,
-        section: 'Listening',
-        type: 'Question-Response',
-        question: `Listen to the question and choose the best response. (Question ${i + 2})`,
-        audio: true,
-        options: [
-          'Option A for question ' + (i + 2),
-          'Option B for question ' + (i + 2), 
-          'Option C for question ' + (i + 2),
-        ],
-        correct: 'A',
-      })),
-      // Reading questions (10-19)
-      ...Array.from({ length: 10 }, (_, i) => ({
-        id: i + 11,
+      {
+        id: 2,
         section: 'Reading',
-        type: 'Text Completion',
-        question: `Choose the word or phrase that best completes the sentence. (Question ${i + 11})`,
-        text: `The company's quarterly report shows a significant _____ in sales compared to last year.`,
+        type: 'comprehension',
+        question: 'According to the passage, what is the company\'s main goal?',
+        text: 'TechCorp has announced its expansion plans for the next fiscal year. The company aims to increase its market share by 25% through strategic partnerships and innovative product development. The CEO emphasized that customer satisfaction remains their top priority.',
         options: [
-          'increase',
-          'increasing',
-          'increased',
-          'to increase',
+          'To hire more employees',
+          'To increase market share by 25%',
+          'To reduce operational costs',
+          'To open new offices'
         ],
-        correct: 'A',
-      })),
-    ],
+        correct: 'To increase market share by 25%'
+      },
+      {
+        id: 3,
+        section: 'Reading',
+        type: 'grammar',
+        question: 'Choose the best option to complete the sentence: "The meeting has been _______ until next week."',
+        options: [
+          'postponed',
+          'postpone',
+          'postponing',
+          'to postpone'
+        ],
+        correct: 'postponed'
+      },
+      {
+        id: 4,
+        section: 'Listening',
+        type: 'image',
+        question: 'What is the person in the image most likely doing?',
+        image: '/placeholder.svg',
+        options: [
+          'Making a presentation',
+          'Attending a meeting',
+          'Working on a computer',
+          'Having lunch'
+        ],
+        correct: 'Making a presentation'
+      }
+    ] as Question[]
   };
-
-  const currentQuestionData = testData.questions[currentQuestion];
 
   // Timer effect
   useEffect(() => {
-    if (timeRemaining > 0 && !isSubmitted) {
-      const timer = setTimeout(() => {
-        setTimeRemaining(timeRemaining - 1);
-      }, 1000);
+    if (timeLeft > 0 && !showResults) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeRemaining === 0) {
-      handleSubmit();
+    } else if (timeLeft === 0) {
+      handleSubmitTest();
     }
-  }, [timeRemaining, isSubmitted]);
-
-  // Initialize answers array
-  useEffect(() => {
-    setAnswers(new Array(testData.totalQuestions).fill(''));
-  }, []);
+  }, [timeLeft, showResults]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -111,254 +108,179 @@ const TestInterface = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswerSelect = (value: string) => {
-    setSelectedAnswer(value);
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = value;
-    setAnswers(newAnswers);
+  const handleAnswerChange = (value: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [testData.questions[currentQuestion].id]: value
+    }));
   };
 
-  const handleNext = () => {
-    if (currentQuestion < testData.totalQuestions - 1) {
+  const handleNextQuestion = () => {
+    if (currentQuestion < testData.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(answers[currentQuestion + 1] || '');
     }
   };
 
-  const handlePrevious = () => {
+  const handlePreviousQuestion = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
-      setSelectedAnswer(answers[currentQuestion - 1] || '');
     }
   };
 
-  const handleSubmit = () => {
-    setIsSubmitted(true);
-    // Calculate score (mock)
-    const score = Math.floor(Math.random() * 200) + 700; // Random score between 700-900
-    navigate('/progress', { 
-      state: { 
-        testCompleted: true, 
-        score: score,
-        testId: testId,
-        testTitle: testData.title 
-      } 
-    });
+  const handleSubmitTest = () => {
+    setShowResults(true);
+    // Here you would typically send results to backend
   };
 
-  const progress = ((currentQuestion + 1) / testData.totalQuestions) * 100;
+  const calculateScore = () => {
+    let correct = 0;
+    testData.questions.forEach(question => {
+      if (answers[question.id] === question.correct) {
+        correct++;
+      }
+    });
+    return Math.round((correct / testData.questions.length) * 100);
+  };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Test Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{testData.title}</h1>
-              <div className="flex items-center gap-4 mt-2">
-                <Badge variant="outline">
-                  Question {currentQuestion + 1} of {testData.totalQuestions}
-                </Badge>
-                <Badge className={currentQuestionData.section === 'Listening' ? 'bg-blue-500' : 'bg-green-500'}>
-                  {currentQuestionData.section}
-                </Badge>
-                <span className="text-sm text-gray-600">{currentQuestionData.type}</span>
+  const currentQ = testData.questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / testData.questions.length) * 100;
+
+  if (showResults) {
+    const score = calculateScore();
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Test Complete!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">{score}%</div>
+              <p className="text-gray-600">
+                You answered {testData.questions.filter(q => answers[q.id] === q.correct).length} out of {testData.questions.length} questions correctly
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Section Breakdown:</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>Listening: 85%</div>
+                <div>Reading: 78%</div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-lg font-mono">
-                <Clock className="h-5 w-5 text-red-500" />
-                <span className={timeRemaining < 300 ? 'text-red-500' : 'text-gray-900'}>
-                  {formatTime(timeRemaining)}
-                </span>
-              </div>
-              <Button 
-                onClick={handleSubmit}
-                variant="destructive"
-                disabled={isSubmitted}
-              >
-                Submit Test
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => navigate('/practice-tests')}>
+                More Tests
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/progress')}>
+                View Progress
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{testData.title}</h1>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Clock className="h-4 w-4" />
+            <span className="font-mono">{formatTime(timeLeft)}</span>
           </div>
-          <div className="mt-4">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-gray-600 mt-1">
-              Progress: {Math.round(progress)}% complete
-            </p>
-          </div>
+          <Button variant="outline" onClick={handleSubmitTest}>
+            Submit Test
+          </Button>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Question Content */}
-          <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">
-                    Question {currentQuestion + 1}
-                  </CardTitle>
-                  {currentQuestionData.audio && (
-                    <Button variant="outline" size="sm">
-                      <Volume2 className="h-4 w-4 mr-2" />
-                      Play Audio
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Question Image */}
-                {currentQuestionData.image && (
-                  <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">Test Image Placeholder</span>
-                  </div>
-                )}
-
-                {/* Question Text */}
-                <div>
-                  <p className="text-lg font-medium mb-4">{currentQuestionData.question}</p>
-                  {currentQuestionData.text && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-800">{currentQuestionData.text}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Answer Options */}
-                <RadioGroup 
-                  value={selectedAnswer} 
-                  onValueChange={handleAnswerSelect}
-                  className="space-y-3"
-                >
-                  {currentQuestionData.options.map((option, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-                      <RadioGroupItem 
-                        value={String.fromCharCode(65 + index)} 
-                        id={`option-${index}`} 
-                      />
-                      <Label 
-                        htmlFor={`option-${index}`} 
-                        className="flex-1 cursor-pointer text-base"
-                      >
-                        <span className="font-medium mr-2">
-                          {String.fromCharCode(65 + index)}.
-                        </span>
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-
-                {/* Navigation */}
-                <div className="flex justify-between pt-6">
-                  <Button 
-                    onClick={handlePrevious}
-                    disabled={currentQuestion === 0}
-                    variant="outline"
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    onClick={handleNext}
-                    disabled={currentQuestion === testData.totalQuestions - 1}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Test Sections */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Test Sections</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {testData.sections.map((section, index) => (
-                  <div 
-                    key={index} 
-                    className={`p-3 rounded-lg border ${
-                      section.current ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {section.name === 'Listening' ? (
-                        <Volume2 className="h-4 w-4" />
-                      ) : (
-                        <BookOpen className="h-4 w-4" />
-                      )}
-                      <span className="font-medium">{section.name}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {section.questions} questions
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Question Navigator */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Question Navigator</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-5 gap-2">
-                  {Array.from({ length: testData.totalQuestions }, (_, index) => (
-                    <Button
-                      key={index}
-                      variant={currentQuestion === index ? "default" : "outline"}
-                      size="sm"
-                      className={`w-10 h-10 ${
-                        answers[index] 
-                          ? 'bg-green-100 border-green-300' 
-                          : currentQuestion === index 
-                          ? '' 
-                          : 'bg-gray-50'
-                      }`}
-                      onClick={() => {
-                        setCurrentQuestion(index);
-                        setSelectedAnswer(answers[index] || '');
-                      }}
-                    >
-                      {index + 1}
-                    </Button>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                    <span>Answered</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    <span>Current</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-50 border border-gray-300 rounded"></div>
-                    <span>Not answered</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Warning */}
-            {timeRemaining < 300 && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Less than 5 minutes remaining! Make sure to submit your test.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
+      {/* Progress */}
+      <div className="mb-6">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Question {currentQuestion + 1} of {testData.questions.length}</span>
+          <span>{currentQ.section}</span>
         </div>
+        <Progress value={progress} className="w-full" />
+      </div>
+
+      {/* Question */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          {/* Audio player for listening questions */}
+          {currentQ.audio && (
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Volume2 className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium">Audio Question</span>
+              </div>
+              <audio controls className="w-full">
+                <source src="/audio/sample.mp3" type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          )}
+
+          {/* Image for image-based questions */}
+          {currentQ.image && (
+            <div className="mb-4">
+              <img 
+                src={currentQ.image} 
+                alt="Question image" 
+                className="max-w-full h-64 object-cover rounded-lg mx-auto"
+              />
+            </div>
+          )}
+
+          {/* Reading passage */}
+          {currentQ.text && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <FileText className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium">Reading Passage</span>
+              </div>
+              <p className="text-sm leading-relaxed">{currentQ.text}</p>
+            </div>
+          )}
+
+          {/* Question */}
+          <h3 className="text-lg font-semibold mb-4">{currentQ.question}</h3>
+
+          {/* Options */}
+          <RadioGroup
+            value={answers[currentQ.id] || ''}
+            onValueChange={handleAnswerChange}
+            className="space-y-3"
+          >
+            {currentQ.options.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`option-${index}`} />
+                <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </CardContent>
+      </Card>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button 
+          variant="outline" 
+          onClick={handlePreviousQuestion}
+          disabled={currentQuestion === 0}
+        >
+          Previous
+        </Button>
+        <Button 
+          onClick={handleNextQuestion}
+          disabled={currentQuestion === testData.questions.length - 1}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
