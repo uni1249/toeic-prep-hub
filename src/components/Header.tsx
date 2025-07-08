@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Menu, X, User, BookOpen } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const Header = () => {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Practice Tests', path: '/practice-tests' },
+    { name: 'Flashcards', path: '/flashcards' },
     { name: 'Blog', path: '/blog' },
     { name: 'Progress', path: '/progress' },
   ];
@@ -56,8 +58,9 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons and Notifications */}
           <div className="hidden md:flex items-center space-x-3">
+            <NotificationDropdown />
             <Link to="/login">
               <Button variant="outline" size="sm">
                 Login
@@ -97,6 +100,9 @@ const Header = () => {
                 ))}
                 <div className="pt-4 border-t">
                   <div className="space-y-3">
+                    <div className="flex justify-center">
+                      <NotificationDropdown />
+                    </div>
                     <Link to="/login" className="block">
                       <Button variant="outline" className="w-full">
                         Login
