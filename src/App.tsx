@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import PracticeTests from "./pages/PracticeTests";
 import TestSetup from "./pages/TestSetup";
 import TestInterface from "./pages/TestInterface";
+import TestCreator from "./pages/TestCreator";
 import Flashcards from "./pages/Flashcards";
 import FlashcardSet from "./pages/FlashcardSet";
 import FlashcardStudy from "./pages/FlashcardStudy";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/practice-tests" element={<PracticeTests />} />
               <Route path="/test-setup/:testId" element={<TestSetup />} />
               <Route path="/test/:testId" element={<TestInterface />} />
+              <Route path="/test-creator" element={<TestCreator />} />
               <Route path="/flashcards" element={<Flashcards />} />
               <Route path="/flashcards/:setId" element={<FlashcardSet />} />
               <Route path="/flashcards/:setId/study" element={<FlashcardStudy />} />
