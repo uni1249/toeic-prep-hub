@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { BookPlus, Book, FlipHorizontal } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { BookPlus, Book, FlipHorizontal, Edit2, Globe, Lock } from 'lucide-react';
 
 interface FlashcardSet {
   id: number;
@@ -15,6 +16,7 @@ interface FlashcardSet {
   description: string;
   cardCount: number;
   createdAt: string;
+  isPublic: boolean;
 }
 
 const Flashcards = () => {
@@ -24,20 +26,24 @@ const Flashcards = () => {
       title: 'TOEIC Vocabulary - Business',
       description: 'Essential business vocabulary for TOEIC',
       cardCount: 50,
-      createdAt: '2024-01-15'
+      createdAt: '2024-01-15',
+      isPublic: false
     },
     {
       id: 2,
       title: 'Common Phrases',
       description: 'Frequently used phrases in TOEIC tests',
       cardCount: 30,
-      createdAt: '2024-01-10'
+      createdAt: '2024-01-10',
+      isPublic: true
     }
   ]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [newSetTitle, setNewSetTitle] = useState('');
   const [newSetDescription, setNewSetDescription] = useState('');
+  const [editTitle, setEditTitle] = useState('');
 
   const handleCreateSet = () => {
     if (newSetTitle.trim()) {
@@ -46,13 +52,39 @@ const Flashcards = () => {
         title: newSetTitle.trim(),
         description: newSetDescription.trim(),
         cardCount: 0,
-        createdAt: new Date().toISOString().split('T')[0]
+        createdAt: new Date().toISOString().split('T')[0],
+        isPublic: false
       };
       setFlashcardSets([...flashcardSets, newSet]);
       setNewSetTitle('');
       setNewSetDescription('');
       setIsCreateDialogOpen(false);
     }
+  };
+
+  const handleEditSet = (set: FlashcardSet) => {
+    setEditingSet(set);
+    setEditTitle(set.title);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingSet && editTitle.trim()) {
+      setFlashcardSets(flashcardSets.map(set => 
+        set.id === editingSet.id 
+          ? { ...set, title: editTitle.trim() }
+          : set
+      ));
+      setEditingSet(null);
+      setEditTitle('');
+    }
+  };
+
+  const handleTogglePublic = (setId: number) => {
+    setFlashcardSets(flashcardSets.map(set => 
+      set.id === setId 
+        ? { ...set, isPublic: !set.isPublic }
+        : set
+    ));
   };
 
   return (
@@ -119,10 +151,19 @@ const Flashcards = () => {
           {flashcardSets.map((set) => (
             <Card key={set.id} className="hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Book className="h-5 w-5" />
-                  {set.title}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Book className="h-5 w-5" />
+                    {set.title}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditSet(set)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
                 <CardDescription>{set.description}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -131,6 +172,24 @@ const Flashcards = () => {
                     <p>{set.cardCount} cards</p>
                     <p>Created: {new Date(set.createdAt).toLocaleDateString()}</p>
                   </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {set.isPublic ? (
+                        <Globe className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Lock className="h-4 w-4 text-gray-600" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {set.isPublic ? 'Public' : 'Private'}
+                      </span>
+                    </div>
+                    <Switch
+                      checked={set.isPublic}
+                      onCheckedChange={() => handleTogglePublic(set.id)}
+                    />
+                  </div>
+
                   <div className="flex space-x-2">
                     <Link to={`/flashcards/${set.id}`} className="flex-1">
                       <Button variant="outline" className="w-full">
@@ -164,6 +223,37 @@ const Flashcards = () => {
             </Dialog>
           </div>
         )}
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editingSet} onOpenChange={() => setEditingSet(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Flashcard Set</DialogTitle>
+              <DialogDescription>
+                Update the title of your flashcard set.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="Enter flashcard set title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditingSet(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={!editTitle.trim()}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
