@@ -11,6 +11,7 @@ import PracticeTests from "./pages/PracticeTests";
 import TestSetup from "./pages/TestSetup";
 import TestInterface from "./pages/TestInterface";
 import TestCreator from "./pages/TestCreator";
+import TestCategories from "./pages/TestCategories";
 import Flashcards from "./pages/Flashcards";
 import FlashcardSet from "./pages/FlashcardSet";
 import FlashcardStudy from "./pages/FlashcardStudy";
@@ -57,6 +58,7 @@ const App = () => (
                 <main className="flex-grow">
                   <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/categories" element={<TestCategories />} />
                     <Route path="/practice-tests" element={<PracticeTests />} />
                     <Route path="/test-setup/:testId" element={<TestSetup />} />
                     <Route path="/test/:testId" element={<TestInterface />} />
