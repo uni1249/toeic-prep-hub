@@ -32,10 +32,28 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import TestResults from "./pages/TestResults";
+import Maintenance from "./pages/Maintenance";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // Check maintenance mode from environment variable
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'ON';
+  
+  // If maintenance mode is ON, only show maintenance page
+  if (isMaintenanceMode) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Maintenance />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -77,6 +95,7 @@ const App = () => (
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/maintenance" element={<Maintenance />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
@@ -88,6 +107,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
