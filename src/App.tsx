@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import TestResults from "./pages/TestResults";
 import Maintenance from "./pages/Maintenance";
 import Feedback from "./pages/Feedback";
+import StudySchedule from "./pages/StudySchedule";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => {
                     <Route path="/account" element={<Account />} />
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/feedback" element={<Feedback />} />
+                    <Route path="/study-schedule" element={<StudySchedule />} />
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/maintenance" element={<Maintenance />} />
