@@ -9,7 +9,8 @@ import {
   FileText, 
   Settings,
   Menu,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,7 @@ const Admin = () => {
     { name: 'Phân loại đề thi', path: '/admin/categories', icon: FolderTree },
     { name: 'Ngân hàng câu hỏi', path: '/admin/questions', icon: Database },
     { name: 'Quản lý đề thi', path: '/admin/tests', icon: FileText },
+    { name: 'Quản lý phản hồi', path: '/admin/feedback', icon: MessageSquare },
     { name: 'Tạo đề thi', path: '/test-creator', icon: Settings },
   ];
 

@@ -28,6 +28,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminCategories from "./pages/AdminCategories";
 import AdminQuestions from "./pages/AdminQuestions";
 import AdminTests from "./pages/AdminTests";
+import AdminFeedback from "./pages/AdminFeedback";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
@@ -69,6 +70,7 @@ const App = () => {
               <Route path="categories" element={<AdminCategories />} />
               <Route path="questions" element={<AdminQuestions />} />
               <Route path="tests" element={<AdminTests />} />
+              <Route path="feedback" element={<AdminFeedback />} />
             </Route>
             
             {/* Public Routes */}
